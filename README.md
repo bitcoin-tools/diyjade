@@ -61,49 +61,80 @@ It's not just a risk of someone hacking or altering YOUR device. An evil maid ca
 
 For further reading, please see [[#1]](https://usa.kaspersky.com/blog/fake-trezor-hardware-crypto-wallet/28299/), [[#2]](https://media.ccc.de/v/35c3-9563-wallet_fail), [[#3]](https://blog.trezor.io/psa-non-genuine-trezor-devices-979b64e359a7), [[#4]](https://web.archive.org/web/20220820031918/https://www.reddit.com/r/ledgerwallet/comments/o154gz/comment/h1zagmk/).
 
-### Current Limitations of Third-Party DIY Hardware
+### Limitations of This Project
 
 - No camera support. To build a DIY Jade with camera support, [please refer here](https://www.youtube.com/watch?v=V2yVKag2wlc).
-- Need a documented process for updating firmware.
+- No Secure Boot support. To mitigate the risk of not using Secure Boot, [keep your DIY Jade secured](#must-read-keep-your-diy-jade-secured). (Secure Boot is great because it prevents someone from stealing your device, flashing malicious firmware, then replacing your device without your knowledge. Secure Boot sucks for noobs because if they lose the key, they lose the ability upgrade their DIY Jades in the future.)
 
 [[back to top]](#table-of-contents)
 
 ## Hardware Options
 
-You are better off buying the hardware directly from the hardware vendor than through a third-party channel like Amazon or Alibaba. In many cases, it's cheaper to buy direct too.
+Pick one of the four $8-$50 options based on your budget.
+
+The button interfaces on the two cheaper options are annoying, so if you're planning to use the device daily, go with one of the two more expensive options.
+
+To reduce the risk of supply chain attacks, buy your hardware directly from the manufacturer rather than through a third-party channel like Amazon or Alibaba. In many cases, it's cheaper to buy directly too.
 
 ### TTGO T-Display
 
 ![TTGO T-Display](img/TTGO-T-Display.jpg)
 
-- **MSRP: [$8-$11](https://www.lilygo.cc/products/lilygo%C2%AE-ttgo-t-display-1-14-inch-lcd-esp32-control-board?variant=42720264683701), either the K164 or Q125 variant**
-- Does not include a battery. Either keep it plugged in or add a generic battery for a few dollars.
-- DO NOT confuse this hardware with the more expensive T-Display S3 or T-Display AMOLED products.
+**MSRP: [$8-$11](https://www.lilygo.cc/products/lilygo%C2%AE-ttgo-t-display-1-14-inch-lcd-esp32-control-board?variant=42720264683701), either the K164 or Q125 variant**
 
+Does NOT include a battery. Either keep it plugged in or add a generic battery for a few dollars.
+
+DO NOT confuse this hardware with the more expensive T-Display S3 or T-Display AMOLED products.
+
+| Interface action | Button combination |
+| --- | --- |
+| Navigate menus left | Push bottom button (below the power plug) |
+| Navigate menus right | Push top button (above the power plug) |
+| Confirm your selection on screen | Push the top and bottom buttons simultaneously |
 
 ### M5Stack M5StickC PLUS
 
 ![M5Stack M5StickC PLUS](img/M5Stack-M5StickC-PLUS.jpg)
 
-- **MSRP: [$20](https://shop.m5stack.com/products/m5stickc-plus-esp32-pico-mini-iot-development-kit)**
-- Includes a built-in battery
-- DO NOT confuse this hardware with the older, cheaper M5StickC. The newer PLUS verison with a larger screen is the one to buy.
+**MSRP: [$20](https://shop.m5stack.com/products/m5stickc-plus-esp32-pico-mini-iot-development-kit)**
 
+Includes a built-in battery.
+
+DO NOT confuse this hardware with the older, cheaper M5StickC. The newer PLUS verison with a larger screen is the one to buy.
+
+| Interface action | Button combination |
+| --- | --- |
+| Turn on device | Press the power button (below the screen)
+| Turn off device | Hold the power button for 3 seconds |
+| Navigate menus left | Push top button (above the screen) |
+| Navigate menus right | Push main button (beside the screen) |
+| Confirm your selection on screen | Hold the top and main buttons simultaneously for 1 second then release |
 
 ### M5Stack Core Basic
 
 ![M5Stack Core Basic](img/M5Stack-Core-Basic.jpg)
 
-- **MSRP: [$40](https://shop.m5stack.com/products/esp32-basic-core-lot-development-kit-v2-7)**
-- Nice 3-button design
+**MSRP: [$40](https://shop.m5stack.com/products/esp32-basic-core-lot-development-kit-v2-7)**
 
+Includes a built-in battery and a nice 3-button design.
+
+| Interface action | Button combination |
+| --- | --- |
+| Turn on device | Press the red power button (on the left side)
+| Turn off device | Hold the red power button for 10 seconds |
+| Navigate menus left | Push left button (below the screen) |
+| Navigate menus right | Push right button (below the screen) |
+| Confirm your selection on screen | Push the center button (below the screen) |
 
 ### M5Stack FIRE v2.6
 
 ![M5Stack FIRE](img/M5Stack-FIRE.jpg)
 
-- **MSRP: [$50](https://shop.m5stack.com/products/m5stack-fire-iot-development-kit-psram-v2-6)**
-- Nice 3-button design, a bigger battery, and a magnetic charging base
+**MSRP: [$50](https://shop.m5stack.com/products/m5stack-fire-iot-development-kit-psram-v2-6)**
+
+Includes a bigger built-in batter and nice 3-button design.
+
+The button interface is the exact same as the [M5Stack Core Basic](#m5stack-core-basic).
 
 [[back to top]](#table-of-contents)
 
@@ -149,7 +180,7 @@ After the script completes, you should see the Jade initialization screen on you
     | --- | --- |
     | TTGO T-Display | `/bin/bash -c "$(curl -sSL https://github.com/bitcoin-tools/diyjade/raw/master/device_specific/flash_the_ttgo_tdisplay)"` |
     | M5Stack M5StickC Plus | `/bin/bash -c "$(curl -sSL https://github.com/bitcoin-tools/diyjade/raw/master/device_specific/flash_the_m5stack_m5stickc_plus)"` |
-    | M5Stack Core | `/bin/bash -c "$(curl -sSL https://github.com/bitcoin-tools/diyjade/raw/master/device_specific/flash_the_m5stack_core_basic)"` |
+    | M5Stack Core Basic | `/bin/bash -c "$(curl -sSL https://github.com/bitcoin-tools/diyjade/raw/master/device_specific/flash_the_m5stack_core_basic)"` |
     | M5Stack FIRE | `/bin/bash -c "$(curl -sSL https://github.com/bitcoin-tools/diyjade/raw/master/device_specific/flash_the_m5stack_fire)"` |
 
 After the script completes, you should see the Jade initialization screen on your device.
@@ -187,7 +218,7 @@ TODO: Add instructions for installing macOS dependendies.
     | --- | --- |
     | TTGO T-Display | `cp configs/sdkconfig_display_ttgo_tdisplay.defaults sdkconfig.defaults` |
     | M5Stack M5StickC Plus | `cp configs/sdkconfig_display_m5stickcplus.defaults sdkconfig.defaults` |
-    | M5Stack Core | `cp configs/sdkconfig_display_m5blackgray.defaults sdkconfig.defaults` |
+    | M5Stack Core Basic | `cp configs/sdkconfig_display_m5blackgray.defaults sdkconfig.defaults` |
     | M5Stack FIRE | `cp configs/sdkconfig_display_m5fire.defaults sdkconfig.defaults` |
 
 6. Modify the configuration file you just loaded to disable logging in debug mode (a.k.a. "research and development" mode).
