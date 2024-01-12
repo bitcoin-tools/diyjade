@@ -78,7 +78,7 @@ To reduce the risk of supply chain attacks, buy your hardware directly from the 
 
 ### TTGO T-Display
 
-![TTGO T-Display](img/TTGO-T-Display.jpg)
+![TTGO T-Display](data/TTGO-T-Display.jpg)
 
 **MSRP: [$8-$11](https://www.lilygo.cc/products/lilygo%C2%AE-ttgo-t-display-1-14-inch-lcd-esp32-control-board?variant=42720264683701), either the K164 or Q125 variant**
 
@@ -94,7 +94,7 @@ DO NOT confuse this hardware with the more expensive T-Display S3 or T-Display A
 
 ### M5Stack M5StickC PLUS
 
-![M5Stack M5StickC PLUS](img/M5Stack-M5StickC-PLUS.jpg)
+![M5Stack M5StickC PLUS](data/M5Stack-M5StickC-PLUS.jpg)
 
 **MSRP: [$20](https://shop.m5stack.com/products/m5stickc-plus-esp32-pico-mini-iot-development-kit)**
 
@@ -112,7 +112,7 @@ DO NOT confuse this hardware with the older, cheaper M5StickC. The newer PLUS ve
 
 ### M5Stack Core Basic
 
-![M5Stack Core Basic](img/M5Stack-Core-Basic.jpg)
+![M5Stack Core Basic](data/M5Stack-Core-Basic.jpg)
 
 **MSRP: [$40](https://shop.m5stack.com/products/esp32-basic-core-lot-development-kit-v2-7)**
 
@@ -128,7 +128,7 @@ Includes a built-in battery and a nice 3-button design.
 
 ### M5Stack FIRE v2.6
 
-![M5Stack FIRE](img/M5Stack-FIRE.jpg)
+![M5Stack FIRE](data/M5Stack-FIRE.jpg)
 
 **MSRP: [$50](https://shop.m5stack.com/products/m5stack-fire-iot-development-kit-psram-v2-6)**
 
