@@ -27,6 +27,11 @@ esp_idf_repo_url="https://github.com/espressif/esp-idf.git"
 chosen_device="M5Stack FIRE"
 tty_device="/dev/ttyACM0"
 
+if [ "$(uname -s)" != "Linux" ]; then
+  echo "ERROR: This script is only compatible with Linux." >&2
+  exit 1
+fi
+
 clear
 echo "------------------------------------------------------------"
 echo "------------------------------------------------------------"
