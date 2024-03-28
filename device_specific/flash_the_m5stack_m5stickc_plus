@@ -27,12 +27,17 @@ esp_idf_repo_url="https://github.com/espressif/esp-idf.git"
 chosen_device="M5Stack M5StickC PLUS"
 tty_device="/dev/ttyUSB0"
 
+if [ "$(uname -s)" != "Linux" ]; then
+  echo "ERROR: This script is only compatible with Linux." >&2
+  exit 1
+fi
+
 clear
 echo "------------------------------------------------------------"
 echo "------------------------------------------------------------"
 echo "---                                                      ---"
 echo "---          Do-It-Yourself Jade Install Script          ---"
-echo "---                Written by Epic Curious               ---"
+echo "---            Device: M5Stack M5StickC PLUS             ---"
 echo "---                                                      ---"
 echo "------------------------------------------------------------"
 echo "------------------------------------------------------------"
@@ -42,7 +47,7 @@ if [ "$(whoami)" = "root" ]; then
   echo -e "ALERT: You're running the script as root/superuser.\nYou may notice PIP 'sudo -H' warnings.\n"
 fi
 
-echo "LINUX ONLY. Flashing the ${chosen_device}..."
+echo "Flashing the ${chosen_device}..."
 
 while read -r dependency; do
   if ! command -v "${dependency}" &> /dev/null; then
