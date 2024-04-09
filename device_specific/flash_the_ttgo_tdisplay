@@ -96,7 +96,8 @@ jade_version="$(git describe --tags)"
 pip install cbor2
 export PYTHONPATH="$jade_save_directory"
 
-secure_boot_status=$(python <<EOF
+secure_boot_status=$(
+  python << EOF
 from jadepy import JadeAPI
 import _cbor2
 import serial
@@ -138,9 +139,15 @@ elif [ "$secure_boot_status" = "disabled" ]; then
     while true; do
       read -r -p "Please select an option (y/n): " enable_secure_boot
       case $enable_secure_boot in
-        [Yy]* ) echo "Secure Boot is being enabled..."; break;;
-        [Nn]* ) echo "Secure Boot will not be enabled."; break;;
-        * ) echo "Invalid option, please enter y or n";;
+      [Yy]*)
+        echo "Secure Boot is being enabled..."
+        break
+        ;;
+      [Nn]*)
+        echo "Secure Boot will not be enabled."
+        break
+        ;;
+      *) echo "Invalid option, please enter y or n" ;;
       esac
     done
   fi
@@ -159,9 +166,15 @@ elif [ "$secure_boot_status" = "uninitialized" ]; then
     while true; do
       read -r -p "Please select an option (y/n): " enable_secure_boot
       case $enable_secure_boot in
-        [Yy]* ) echo "Secure Boot is being enabled..."; break;;
-        [Nn]* ) echo "Secure Boot will not be enabled."; break;;
-        * ) echo "Invalid option, please enter y or n";;
+      [Yy]*)
+        echo "Secure Boot is being enabled..."
+        break
+        ;;
+      [Nn]*)
+        echo "Secure Boot will not be enabled."
+        break
+        ;;
+      *) echo "Invalid option, please enter y or n" ;;
       esac
     done
   fi
@@ -171,7 +184,7 @@ else
   enable_secure_boot=n
 fi
 
-[ -f sdkconfig ] && mv sdkconfig sdkconfig.bak  # make sure sdkconfig is removed from previous builds
+[ -f sdkconfig ] && mv sdkconfig sdkconfig.bak # make sure sdkconfig is removed from previous builds
 
 cp configs/sdkconfig_display_ttgo_tdisplay.defaults sdkconfig.defaults
 sed -i.bak '/CONFIG_DEBUG_MODE/d' sdkconfig.defaults
@@ -211,7 +224,7 @@ if [[ "$enable_secure_boot" == "y" ]]; then
   sed -i.bak '/CONFIG_SECURE_FLASH_ENCRYPTION_MODE_RELEASE=/d' sdkconfig.defaults
   echo "CONFIG_SECURE_FLASH_ENCRYPTION_MODE_RELEASE=y" >> sdkconfig.defaults
 
-  sed -i.bak '/CONFIG_ESP32_REV_MIN_/d' sdkconfig.defaults  # remove all REV_MIN entries
+  sed -i.bak '/CONFIG_ESP32_REV_MIN_/d' sdkconfig.defaults # remove all REV_MIN entries
   echo "CONFIG_ESP32_REV_MIN_3=y" >> sdkconfig.defaults
 
   echo "Secure Boot configuration has been updated in sdkconfig.defaults... building bootloader"
@@ -250,7 +263,7 @@ if [[ "$enable_secure_boot" == "y" ]]; then
   esptool.py --chip esp32 --before=default_reset --after=no_reset write_flash --flash_mode dio --flash_freq 40m --flash_size keep 0x1000 build/bootloader/bootloader.bin
   echo "Flashing app..."
   sleep 2
-  esptool.py --before default_reset --after no_reset --chip esp32  write_flash --flash_mode dio --flash_size keep --flash_freq 40m 0x9000 build/partition_table/partition-table.bin 0xe000 build/ota_data_initial.bin 0x10000 build/jade.bin
+  esptool.py --before default_reset --after no_reset --chip esp32 write_flash --flash_mode dio --flash_size keep --flash_freq 40m 0x9000 build/partition_table/partition-table.bin 0xe000 build/ota_data_initial.bin 0x10000 build/jade.bin
   echo -e "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
   echo -e "!!!    Flash complete, NOW WAIT FOR THE DEVICE TO BOOT PROPERLY OR IT WILL BRICK   !!!"
   echo -e "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
