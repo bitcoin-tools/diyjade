@@ -136,7 +136,7 @@ elif [ "$secure_boot_status" = "disabled" ]; then
     enable_secure_boot=n
   else
     while true; do
-      read -p "Please select an option (y/n): " enable_secure_boot
+      read -r -p "Please select an option (y/n): " enable_secure_boot
       case $enable_secure_boot in
         [Yy]* ) echo "Secure Boot is being enabled..."; break;;
         [Nn]* ) echo "Secure Boot will not be enabled."; break;;
@@ -157,7 +157,7 @@ elif [ "$secure_boot_status" = "uninitialized" ]; then
     enable_secure_boot=n
   else
     while true; do
-      read -p "Please select an option (y/n): " enable_secure_boot
+      read -r -p "Please select an option (y/n): " enable_secure_boot
       case $enable_secure_boot in
         [Yy]* ) echo "Secure Boot is being enabled..."; break;;
         [Nn]* ) echo "Secure Boot will not be enabled."; break;;
@@ -241,7 +241,6 @@ if [[ "$enable_secure_boot" == "u" ]]; then
     fi
   done
   ./jade_ota.py --noagent
-  [ $? -eq  0 ] && echo "Update finished"
   exit 0
 fi
 
