@@ -61,6 +61,18 @@ while read -r dependency; do
   fi
 done < <(curl -fsSL https://github.com/bitcoin-tools/diyjade/raw/master/depends.txt)
 
+if [ "${CI:-false}" = false ]; then
+  while [ ! -c "${tty_device}" ]; do
+    read -srn1 -p "Connect your ${chosen_device} and PRESS ANY KEY to continue... " && echo
+  done
+  initial_tty_device_permissions="$(stat -c '%a' "${tty_device}")"
+  if [ "${initial_tty_device_permissions:2}" -lt 6 ]; then
+    echo -e "\nElevating write permissions for ${chosen_device}"
+    sudo chmod o+rw "${tty_device}"
+    echo
+  fi
+fi
+
 if [ ! -f "${esp_idf_save_directory}"/export.sh ]; then
   git clone --branch "${esp_idf_git_tag}" --single-branch --depth 1 "${esp_idf_repo_url}" "${esp_idf_temp_directory}"
   cd "${esp_idf_temp_directory}"/
@@ -81,25 +93,171 @@ fi
 cd "${jade_save_directory}"
 jade_version="$(git describe --tags)"
 
+pip install cbor2
+export PYTHONPATH="$jade_save_directory"
+
+secure_boot_status=$(python <<EOF
+from jadepy import JadeAPI
+import _cbor2
+import serial
+
+create_jade_fn = JadeAPI.create_serial
+kwargs = {'device': None, 'timeout': 5}
+
+try:
+    with create_jade_fn(**kwargs) as jade:
+        verinfo = jade.get_version_info()
+
+    if 'SB' in verinfo['JADE_FEATURES']:
+        print('enabled')
+    else:
+        print('disabled')
+except _cbor2.CBORDecodeEOF:
+    print('uninitialized')
+except serial.serialutil.SerialException:
+    print('devicenotfound')
+EOF
+)
+
+clear
+if [ "$secure_boot_status" = "enabled" ]; then
+  echo "Secure-boot is enabled."
+  enable_secure_boot=u
+elif [ "$secure_boot_status" = "disabled" ]; then
+  echo "Secure-boot is disabled."
+  echo ""
+  echo "Would you like to enable Secure Boot?"
+  echo "Your options are:"
+  echo "  y - Yes"
+  echo "  n - No"
+  echo ""
+  echo "Warning: Enabling secure boot is only recommended after making sure that everything works. DO NOT ENABLE IF YOU ARE NOT SURE ABOUT THE CONSEQUENCES"
+  if [ "${CI:-false}" = true ]; then
+    enable_secure_boot=n
+  else
+    while true; do
+      read -p "Please select an option (y/n): " enable_secure_boot
+      case $enable_secure_boot in
+        [Yy]* ) echo "Secure Boot is being enabled..."; break;;
+        [Nn]* ) echo "Secure Boot will not be enabled."; break;;
+        * ) echo "Invalid option, please enter y or n";;
+      esac
+    done
+  fi
+elif [ "$secure_boot_status" = "uninitialized" ]; then
+  echo "The device is not initialized yet."
+  echo ""
+  echo "Would you like to enable Secure Boot?"
+  echo "Your options are:"
+  echo "  y - Yes"
+  echo "  n - No"
+  echo ""
+  echo "Warning: Enabling secure boot is only recommended after making sure that everything works. DO NOT ENABLE IF YOU ARE NOT SURE ABOUT THE CONSEQUENCES"
+  if [ "${CI:-false}" = true ]; then
+    enable_secure_boot=n
+  else
+    while true; do
+      read -p "Please select an option (y/n): " enable_secure_boot
+      case $enable_secure_boot in
+        [Yy]* ) echo "Secure Boot is being enabled..."; break;;
+        [Nn]* ) echo "Secure Boot will not be enabled."; break;;
+        * ) echo "Invalid option, please enter y or n";;
+      esac
+    done
+  fi
+else
+  echo "secure_boot_status is $secure_boot_status"
+  [ "${CI:-false}" = false ] && echo "This should only happen within ci builds, check manually" && exit 1
+  enable_secure_boot=n
+fi
+
+[ -f sdkconfig ] && mv sdkconfig sdkconfig.bak  # make sure sdkconfig is removed from previous builds
+
 cp configs/sdkconfig_display_ttgo_tdisplay.defaults sdkconfig.defaults
-sed -i.bak '/CONFIG_DEBUG_MODE/d' ./sdkconfig.defaults
+sed -i.bak '/CONFIG_DEBUG_MODE/d' sdkconfig.defaults
 sed -i.bak '1s/^/CONFIG_LOG_DEFAULT_LEVEL_NONE=y\n/' sdkconfig.defaults
+
+if [[ "$enable_secure_boot" == "y" ]]; then
+  clear
+  echo -e "\nWARNING: You are about to enable Secure Boot on your device. This process is irreversible. Once Secure Boot is enabled, all future installations, updates, or firmware modifications will require the signing key created during this process. It is crucial to store the signing key (~/jade-diy.pem) in a secure, offline location and remove it from your computer to prevent unauthorized access.\n\n"
+  echo -e "Please ensure that you have backed up the signing key and stored it securely offline. Failure to securely store this key could result in being unable to update or modify your device in the future.\n\n"
+  echo -e "The process will begin in 10 seconds. Press Ctrl+C to cancel."
+  for i in {10..1}; do
+    printf "\rStarting in %d seconds..." "$i"
+    sleep 1
+  done
+
+  if [ ! -f ~/jade-diy.pem ]; then
+    openssl genrsa -out ~/jade-diy.pem 3072
+  fi
+
+  sed -i.bak '/CONFIG_EFUSE_VIRTUAL/d' sdkconfig.defaults
+
+  sed -i.bak '/CONFIG_ESP32_DISABLE_BASIC_ROM_CONSOLE=/d' sdkconfig.defaults
+  echo "CONFIG_ESP32_DISABLE_BASIC_ROM_CONSOLE=y" >> sdkconfig.defaults
+
+  sed -i.bak '/CONFIG_SECURE_DISABLE_ROM_DL_MODE=/d' sdkconfig.defaults
+  echo "CONFIG_SECURE_DISABLE_ROM_DL_MODE=y" >> sdkconfig.defaults
+
+  sed -i.bak '/CONFIG_SECURE_BOOT_SIGNING_KEY=/d' sdkconfig.defaults
+  echo 'CONFIG_SECURE_BOOT_SIGNING_KEY="../../../jade-diy.pem"' >> sdkconfig.defaults
+
+  sed -i.bak '/CONFIG_SECURE_BOOT=/d' sdkconfig.defaults
+  echo "CONFIG_SECURE_BOOT=y" >> sdkconfig.defaults
+
+  sed -i.bak '/CONFIG_SECURE_FLASH_ENC_ENABLED=/d' sdkconfig.defaults
+  echo "CONFIG_SECURE_FLASH_ENC_ENABLED=y" >> sdkconfig.defaults
+
+  sed -i.bak '/CONFIG_SECURE_FLASH_ENCRYPTION_MODE_RELEASE=/d' sdkconfig.defaults
+  echo "CONFIG_SECURE_FLASH_ENCRYPTION_MODE_RELEASE=y" >> sdkconfig.defaults
+
+  sed -i.bak '/CONFIG_ESP32_REV_MIN_/d' sdkconfig.defaults  # remove all REV_MIN entries
+  echo "CONFIG_ESP32_REV_MIN_3=y" >> sdkconfig.defaults
+
+  echo "Secure Boot configuration has been updated in sdkconfig.defaults... building bootloader"
+  idf.py bootloader
+fi
 rm sdkconfig.defaults.bak
+
+# workaround to prevent changed idf manifest hash to flag build as dirty see https://github.com/Blockstream/Jade/issues/98
+git restore dependencies.lock
 
 idf.py build
 
 [ "${CI:-false}" = true ] && echo "Exiting the script for CI runners." && exit 0
 
-while [ ! -c "${tty_device}" ]; do
-  read -srn1 -p "Connect your ${chosen_device} and PRESS ANY KEY to continue... " && echo
-done
-initial_tty_device_permissions="$(stat -c '%a' "${tty_device}")"
-if [ "${initial_tty_device_permissions:2}" -lt 6 ]; then
-  echo -e "\nElevating write permissions for ${chosen_device}"
-  sudo chmod o+rw "${tty_device}"
-  echo
+if [[ "$enable_secure_boot" == "u" ]]; then
+  echo "Upgrading secure boot enabled device... please confirm on screen"
+  while true; do
+    if [ -f ~/jade-diy.pem ] && [ -r ~/jade-diy.pem ]; then
+      echo "The signing key ~/jade-diy.pem exists and is readable."
+      break
+    else
+      clear
+      echo "Error: Signing key ~/jade-diy.pem missing. Please make sure that the used signing key ~/jade-diy.pem exists and is readable under the specified path."
+      echo "The script will continue once the key is available"
+      echo "(Ctrl + c to cancel)"
+      sleep 5
+    fi
+  done
+  ./jade_ota.py --noagent
+  [ $? -eq  0 ] && echo "Update finished"
+  exit 0
 fi
 
-idf.py flash
-
+if [[ "$enable_secure_boot" == "y" ]]; then
+  echo "Flashing bootloader..."
+  sleep 2
+  esptool.py --chip esp32 --before=default_reset --after=no_reset write_flash --flash_mode dio --flash_freq 40m --flash_size keep 0x1000 build/bootloader/bootloader.bin
+  echo "Flashing app..."
+  sleep 2
+  esptool.py --before default_reset --after no_reset --chip esp32  write_flash --flash_mode dio --flash_size keep --flash_freq 40m 0x9000 build/partition_table/partition-table.bin 0xe000 build/ota_data_initial.bin 0x10000 build/jade.bin
+  echo -e "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+  echo -e "!!!    Flash complete, NOW WAIT FOR THE DEVICE TO BOOT PROPERLY OR IT WILL BRICK   !!!"
+  echo -e "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+  sleep 5
+  idf.py monitor
+else
+  idf.py flash
+fi
 echo -e "\nSUCCESS! Jade ${jade_version} is now installed on your ${chosen_device}.\nYou can close this window.\n"
