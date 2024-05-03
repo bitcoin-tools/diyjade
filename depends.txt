@@ -2,4 +2,3 @@ cmake
 curl
 git
 pip
-virtualenv
