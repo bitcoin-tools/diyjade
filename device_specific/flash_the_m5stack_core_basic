@@ -39,6 +39,8 @@ echo "---                                                      ---"
 echo "---          Do-It-Yourself Jade Install Script          ---"
 echo "---              Device: M5Stack Core Basic              ---"
 echo "---                                                      ---"
+echo "---       https://github.com/bitcoin-tools/diyjade       ---"
+echo "---                                                      ---"
 echo "------------------------------------------------------------"
 echo "------------------------------------------------------------"
 echo
