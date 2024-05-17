@@ -26,6 +26,7 @@ esp_idf_repo_url="https://github.com/espressif/esp-idf.git"
 
 chosen_device="TTGO T-Display"
 tty_device="/dev/ttyACM0"
+signing_key_path=~/jade-diy.pem
 
 if [ "$(uname -s)" != "Linux" ]; then
   echo "ERROR: This script is only compatible with Linux." >&2
@@ -122,17 +123,17 @@ EOF
 
 clear
 if [ "$secure_boot_status" = "enabled" ]; then
-  echo "Secure-boot is enabled."
+  echo "Secure Boot is enabled."
   enable_secure_boot=u
 elif [ "$secure_boot_status" = "disabled" ]; then
-  echo "Secure-boot is disabled."
+  echo "Secure Boot is disabled."
   echo ""
   echo "Would you like to enable Secure Boot?"
   echo "Your options are:"
   echo "  y - Yes"
   echo "  n - No"
   echo ""
-  echo "Warning: Enabling secure boot is only recommended after making sure that everything works. DO NOT ENABLE IF YOU ARE NOT SURE ABOUT THE CONSEQUENCES"
+  echo "Warning: Enabling Secure Boot is only recommended after making sure that everything works. DO NOT ENABLE IF YOU ARE NOT SURE ABOUT THE CONSEQUENCES"
   if [ "${CI:-false}" = true ]; then
     enable_secure_boot=n
   else
@@ -159,7 +160,7 @@ elif [ "$secure_boot_status" = "uninitialized" ]; then
   echo "  y - Yes"
   echo "  n - No"
   echo ""
-  echo "Warning: Enabling secure boot is only recommended after making sure that everything works. DO NOT ENABLE IF YOU ARE NOT SURE ABOUT THE CONSEQUENCES"
+  echo "Warning: Enabling Secure Boot is only recommended after making sure that everything works. DO NOT ENABLE IF YOU ARE NOT SURE ABOUT THE CONSEQUENCES"
   if [ "${CI:-false}" = true ]; then
     enable_secure_boot=n
   else
@@ -192,7 +193,7 @@ sed -i.bak '1s/^/CONFIG_LOG_DEFAULT_LEVEL_NONE=y\n/' sdkconfig.defaults
 
 if [[ "$enable_secure_boot" == "y" ]]; then
   clear
-  echo -e "\nWARNING: You are about to enable Secure Boot on your device. This process is irreversible. Once Secure Boot is enabled, all future installations, updates, or firmware modifications will require the signing key created during this process. It is crucial to store the signing key (~/jade-diy.pem) in a secure, offline location and remove it from your computer to prevent unauthorized access.\n\n"
+  echo -e "\nWARNING: You are about to enable Secure Boot on your device. This process is irreversible. Once Secure Boot is enabled, all future installations, updates, or firmware modifications will require the signing key created during this process. It is crucial to store the signing key ($signing_key_path) in a secure, offline location and remove it from your computer to prevent unauthorized access.\n\n"
   echo -e "Please ensure that you have backed up the signing key and stored it securely offline. Failure to securely store this key could result in being unable to update or modify your device in the future.\n\n"
   echo -e "The process will begin in 10 seconds. Press Ctrl+C to cancel."
   for i in {10..1}; do
@@ -200,8 +201,8 @@ if [[ "$enable_secure_boot" == "y" ]]; then
     sleep 1
   done
 
-  if [ ! -f ~/jade-diy.pem ]; then
-    openssl genrsa -out ~/jade-diy.pem 3072
+  if [[ ! -f $signing_key_path ]]; then
+    openssl genrsa -out $signing_key_path 3072
   fi
 fi
 
@@ -215,7 +216,7 @@ if [[ "$enable_secure_boot" == "y" || "$enable_secure_boot" == "u" ]]; then
   echo "CONFIG_SECURE_DISABLE_ROM_DL_MODE=y" >> sdkconfig.defaults
 
   sed -i.bak '/CONFIG_SECURE_BOOT_SIGNING_KEY=/d' sdkconfig.defaults
-  echo 'CONFIG_SECURE_BOOT_SIGNING_KEY="../../../jade-diy.pem"' >> sdkconfig.defaults
+  echo "CONFIG_SECURE_BOOT_SIGNING_KEY=\"$signing_key_path\"" >> sdkconfig.defaults
 
   sed -i.bak '/CONFIG_SECURE_BOOT=/d' sdkconfig.defaults
   echo "CONFIG_SECURE_BOOT=y" >> sdkconfig.defaults
@@ -241,26 +242,8 @@ idf.py build
 
 [ "${CI:-false}" = true ] && echo "Exiting the script for CI runners." && exit 0
 
-if [[ "$enable_secure_boot" == "u" ]]; then
-  echo "Upgrading secure boot enabled device... please confirm on screen"
-  while true; do
-    if [ -f ~/jade-diy.pem ] && [ -r ~/jade-diy.pem ]; then
-      echo "The signing key ~/jade-diy.pem exists and is readable."
-      break
-    else
-      clear
-      echo "Error: Signing key ~/jade-diy.pem missing. Please make sure that the used signing key ~/jade-diy.pem exists and is readable under the specified path."
-      echo "The script will continue once the key is available"
-      echo "(Ctrl + c to cancel)"
-      sleep 5
-    fi
-  done
-  ./jade_ota.py --noagent
-  exit 0
-fi
-
 if [[ "$enable_secure_boot" == "y" ]]; then
-  echo "Flashing bootloader..."
+  echo "Flashing Secure Boot enabled bootloader..."
   sleep 2
   esptool.py --chip esp32 --before=default_reset --after=no_reset write_flash --flash_mode dio --flash_freq 40m --flash_size keep 0x1000 build/bootloader/bootloader.bin
   echo "Flashing app..."
@@ -271,7 +254,23 @@ if [[ "$enable_secure_boot" == "y" ]]; then
   echo -e "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
   sleep 5
   idf.py monitor
-else
+elif [[ "$enable_secure_boot" == "n" ]]; then
   idf.py flash
+elif [[ "$enable_secure_boot" == "u" ]]; then
+  echo "Upgrading Secure Boot enabled device... please confirm on screen"
+  while true; do
+    if [[ -f "$signing_key_path" && -r "$signing_key_path" ]]; then
+      echo "The signing key $signing_key_path exists and is readable."
+      break
+    else
+      clear
+      echo "Error: Signing key $signing_key_path missing. Please make sure that the used signing key $signing_key_path exists and is readable under the specified path."
+      echo "The script will continue once the key is available"
+      echo "(Ctrl + c to cancel)"
+      sleep 5
+    fi
+  done
+  ./jade_ota.py --noagent --skipble
 fi
+
 echo -e "\nSUCCESS! Jade ${jade_version} is now installed on your ${chosen_device}.\nYou can close this window.\n"
