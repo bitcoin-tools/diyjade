@@ -15,11 +15,11 @@ working_directory="${HOME}/Downloads/diy_jade"
 temp_directory="${working_directory}/temp"
 trap cleanup EXIT
 
-jade_git_tag="1.0.29"
+jade_git_tag="1.0.30"
 jade_save_directory="${working_directory}/jade"
 jade_repo_url="https://github.com/blockstream/jade.git"
 
-esp_idf_git_tag="v5.1.2"
+esp_idf_git_tag="v5.1.3"
 esp_idf_temp_directory="${temp_directory}/esp-idf"
 esp_idf_save_directory="${working_directory}/esp-idf"
 esp_idf_repo_url="https://github.com/espressif/esp-idf.git"
@@ -39,6 +39,8 @@ echo "---                                                      ---"
 echo "---          Do-It-Yourself Jade Install Script          ---"
 echo "---              Device: M5Stack Core Basic              ---"
 echo "---                                                      ---"
+echo "---       https://github.com/bitcoin-tools/diyjade       ---"
+echo "---                                                      ---"
 echo "------------------------------------------------------------"
 echo "------------------------------------------------------------"
 echo
@@ -52,7 +54,7 @@ echo "Flashing the ${chosen_device}..."
 while read -r dependency; do
   if ! command -v "${dependency}" &> /dev/null; then
     echo -en "\n\nERROR:\n${dependency} was not found on your system.\nPlease install ${dependency} by running:\n\n"
-    if [ "${dependency}" == "pip" ] || [ "${dependency}" == "virtualenv" ]; then
+    if [ "${dependency}" == "pip" ]; then
       echo -en "sudo apt update && sudo apt install -y python3-${dependency}\n\n"
     else
       echo -en "sudo apt update && sudo apt install -y ${dependency}\n\n"
@@ -60,6 +62,14 @@ while read -r dependency; do
     exit 1
   fi
 done < <(curl -fsSL https://github.com/bitcoin-tools/diyjade/raw/master/depends.txt)
+
+if grep -qEi '(debian|ubuntu)' /etc/os-release; then
+  if ! dpkg -s python3-venv &> /dev/null; then
+    echo -en "Package python3-venv is missing, please install by running:\n\n"
+    echo -en "sudo apt update && sudo apt install -y python3-venv\n\n"
+    exit 1
+  fi
+fi
 
 if [ ! -f "${esp_idf_save_directory}"/export.sh ]; then
   git clone --branch "${esp_idf_git_tag}" --single-branch --depth 1 "${esp_idf_repo_url}" "${esp_idf_temp_directory}"

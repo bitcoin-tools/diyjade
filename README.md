@@ -141,9 +141,9 @@ The button interface is the exact same as the [M5Stack Core Basic](#m5stack-core
 ## Set-Up Instructions
 
 There are three options for flashing your device:
-- [**Install with the Semi-Automated Script**](#install-with-the-semi-automated-script) (easiest way)
-- [**Install with a Device-Specific Script**](#install-with-a-device-specific-script) (another easy way)
-- [**Install by Running the Code Manually**](#install-by-running-the-code-manually) (harder way)
+- [**Install with the Semi-Automated Script**](#use-the-semi-automated-script) (easiest way)
+- [**Install with a Device-Specific Script**](#use-a-device-specific-script) (another easy way)
+- [**Install by Running the Code Manually**](#run-the-commands-manually) (harder way)
 
 ### Use the Semi-Automated Script
 
@@ -198,7 +198,7 @@ This options is provided for people who want to run the commands themselves.
     sudo apt update
     sudo apt install -y cmake git python3-pip python3-venv
     [ -d ${HOME}/esp ] || mkdir ${HOME}/esp
-    git clone -b v5.1.1 --recursive https://github.com/espressif/esp-idf.git ${HOME}/esp/esp-idf
+    git clone -b v5.1.3 --recursive https://github.com/espressif/esp-idf.git ${HOME}/esp/esp-idf
     cd "${HOME}"/esp/esp-idf
     ./install.sh esp32
     . ./export.sh
@@ -207,9 +207,8 @@ TODO: Add instructions for installing macOS dependendies.
   
 4. Download the Jade source code. Copy-and-paste the following lines into Terminal:
     ```bash
-    git clone --recursive https://github.com/blockstream/jade "${HOME}"/jade
+    git clone -b 1.0.30 --recursive https://github.com/blockstream/jade "${HOME}"/jade
     cd "${HOME}"/jade/
-    git checkout $(git tag | grep -v miner | sort -V | tail -1)
     ```
   
 5. Load the pre-built configuration file for your DIY hardware.
